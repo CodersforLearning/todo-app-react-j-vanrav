@@ -1,78 +1,60 @@
-import { render } from '@testing-library/react';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import TodoForm from './components/TodoForm';
+import TodoList from './components/TodoList';
+import './App.css'
 
-class App extends React.Component{
-  constructor(props){
-    super(props);
-    this.state={
-      newItem:"",
-      list:[]
-    }
-  }
+const LOCAL_STORAGE_KEY = 'react-todo-list-todos'
 
-  updateInput(key, value){
-    //update react state
-    this.setState({
-      [key]: value
-    });
-  }
+function App() {
+  const [todos, setTodos] = useState([]);
 
-  addItem(){
-    //create item with unique id
-    const newItem={
-      id: 1+Math.random(),
-      value: this.state.newItem.slice()
+  useEffect(()=>{
+    const storageTodos = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY))
+    if (storageTodos){
+      setTodos(storageTodos);
     };
-    // copy of current list of items
-    const list = [...this.state.list];
+  }, []);
 
-    //add new item to the list
-    list.push(newItem);
+  useEffect(()=>{
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todos));
+  }, [todos])
 
-    //update state with new list and reset newItem input
-    this.setState({
-      list,
-      newItem:""
-    })
-
+  function addTodo(todo){
+    setTodos([todo, ...todos]);
   }
-  deleteItem(id){
-    //copy current list of items
-    const list = [...this.state.list];
-    //filter out item being deleted
-    const updatedList = list.filter(item => item.id !== id);
-    this.setState({list: updatedList})
+
+  function toggleComplete(id){
+    setTodos(
+      todos.map(todo=>{
+        if (todo.id === id){
+          return {
+            ...todo,
+            completed: !todo.completed
+          };
+        }
+        return todo;
+      })
+
+    )
   }
-  render(){
-    return (
-      <div className="App">
-        <div>
-          Add an item...
-          <br/>
-          <input
-            type="text"
-            placeholder="Type item here..."
-            value={this.state.newItem}
-            onChange={e => this.updateInput("newItem", e.target.value)}
-          />
-          <button onClick={() => this.addItem()}>
-            Add
-          </button>
-          <br/>
-          <ul>
-            {this.state.list.map(item => {
-              return(
-                <li key={item.id}>
-                  {item.value}
-                  <button onClick={() => this.deleteItem(item.id)}>X</button>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
+
+  function removeTodo(id){
+    setTodos(todos.filter(todo=>todo.id!==id));
+  }
+
+  return (
+    <div className="App">
+      <div>
+      <p>React Todo</p>
+        <TodoForm addTodo={addTodo}/>
+        <TodoList
+          todos={todos}
+          toggleComplete={toggleComplete}
+          removeTodo={removeTodo}
+        />
       </div>
-    );
-  }
+    </div>
+  );
 }
 
 export default App;
